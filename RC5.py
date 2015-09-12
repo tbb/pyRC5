@@ -93,18 +93,3 @@ class RC5:
                 res = (A.to_bytes(self.W // 8, byteorder='big')
                        + B.to_bytes(self.W // 8, byteorder='big'))
                 out.write(res.rstrip(b'\x00'))
-
-
-if __name__ == "__main__":
-    if platform.architecture()[0].startswith('32'):
-        W = 32
-    elif platform.architecture()[0].startswith('64'):
-        W = 64
-    else:
-        raise Exception("What's going on!?")
-    R = 12
-    key = b"testkeyforRCdef"
-
-    R = RC5(W, R, key)
-    R.encrypt("input2.txt", "encrypt.txt")
-    R.decrypt("encrypt.txt", "decrypt.txt")
