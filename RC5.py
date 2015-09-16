@@ -35,7 +35,7 @@ class RC5:
         while len(self.key) % (self.W // 8):
             self.key += b'\x00'
         self.c = len(self.key) // (self.W // 8)
-        L, key = [], bin(int.from_bytes(self.key, byteorder='big'))[2:]
+        L, key = [], bin(int.from_bytes(self.key, byteorder='little'))[2:]
         for i in range(self.c):
             L.append(int(key[:self.W], 2))
             key = key[self.W:]
@@ -61,8 +61,8 @@ class RC5:
                 if not text:
                     break
                 text = text.ljust(self.W // 4, b'\x00')
-                A = int.from_bytes(text[:self.W // 8], byteorder='big')
-                B = int.from_bytes(text[self.W // 8:], byteorder='big')
+                A = int.from_bytes(text[:self.W // 8], byteorder='little')
+                B = int.from_bytes(text[self.W // 8:], byteorder='little')
                 A = (A + self.S[0]) % 2 ** self.W
                 B = (B + self.S[1]) % 2 ** self.W
                 for i in range(1, self.R):
@@ -71,8 +71,8 @@ class RC5:
                     B = (self.__lshift((A ^ B), A)
                          + self.S[2 * i + 1]) % 2 ** self.W
 
-                out.write(A.to_bytes(self.W // 8, byteorder='big') +
-                          B.to_bytes(self.W // 8, byteorder='big'))
+                out.write(A.to_bytes(self.W // 8, byteorder='little') +
+                          B.to_bytes(self.W // 8, byteorder='little'))
 
     def decrypt(self, inpFileName, outFileName):
         with open(inpFileName, 'rb') as inp, open(outFileName, 'wb') as out:
@@ -80,8 +80,8 @@ class RC5:
                 text = inp.read(self.W // 4)
                 if not text:
                     break
-                A = int.from_bytes(text[:self.W // 8], byteorder='big')
-                B = int.from_bytes(text[self.W // 8:], byteorder='big')
+                A = int.from_bytes(text[:self.W // 8], byteorder='little')
+                B = int.from_bytes(text[self.W // 8:], byteorder='little')
                 for i in range(self.R - 1, 0, -1):
                     B = self.__rshift(
                         ((B - self.S[2 * i + 1]) % 2 ** self.W), A) ^ A
@@ -89,6 +89,6 @@ class RC5:
                         ((A - self.S[2 * i]) % 2 ** self.W), B) ^ B
                 B = (B - self.S[1]) % 2 ** self.W
                 A = (A - self.S[0]) % 2 ** self.W
-                res = (A.to_bytes(self.W // 8, byteorder='big')
-                       + B.to_bytes(self.W // 8, byteorder='big'))
+                res = (A.to_bytes(self.W // 8, byteorder='little')
+                       + B.to_bytes(self.W // 8, byteorder='little'))
                 out.write(res.rstrip(b'\x00'))
