@@ -1,15 +1,17 @@
 class RC5:
 
     def __init__(self, w, R, key):
-        self.w = w
-        self.R = R
-        self.key = key
+        self.w = w # block size (32, 64 or 128 bits)
+        self.R = R # number of rounds (0 to 255)
+        self.key = key # key (0 to 2040 bits)
+        # some useful constants
         self.T = 2 * (R + 1)
         self.w4 = w // 4
         self.w8 = w // 8
         self.mod = 2 ** self.w
         self.mask = self.mod - 1
         self.b = len(key)
+
         self.__keyAlign()
         self.__keyExtend()
         self.__shuffle()
@@ -22,19 +24,19 @@ class RC5:
         n %= self.w
         return ((val & self.mask) >> n) | (val << (self.w - n) & self.mask)
 
-    def __const(self):
+    def __const(self): # constants generation
         if self.w == 16:
-            return (0xB7E1, 0x9E37)
+            return (0xB7E1, 0x9E37) # return P, Q values
         elif self.w == 32:
             return (0xB7E15163, 0x9E3779B9)
         elif self.w == 64:
             return (0xB7E151628AED2A6B, 0x9E3779B97F4A7C15)
 
     def __keyAlign(self):
-        if self.b == 0:
+        if self.b == 0: # key is empty
             self.c = 1
         elif self.b % self.w8:
-            self.key += b'\x00' * (self.w8 - self.b % self.w8)
+            self.key += b'\x00' * (self.w8 - self.b % self.w8) # fill key with \x00 bytes
             self.b = len(self.key)
             self.c = self.b // self.w8
         else:
@@ -125,9 +127,7 @@ class RC5:
             if len(temp) != self.w4:
                 run = False
             res += self.decryptBlock(temp)
-            if not run:
-                res = res.rstrip(b'\x00')
             data = data[self.w4:]
             if not data:
                 break
-        return res
+        return res.rstrip(b'\x00')
