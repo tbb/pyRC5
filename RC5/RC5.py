@@ -1,9 +1,10 @@
 class RC5:
 
-    def __init__(self, w, R, key):
-        self.w = w # block size (32, 64 or 128 bits)
-        self.R = R # number of rounds (0 to 255)
-        self.key = key # key (0 to 2040 bits)
+    def __init__(self, w, R, key, strip_extra_nulls=False):
+        self.w = w  # block size (32, 64 or 128 bits)
+        self.R = R  # number of rounds (0 to 255)
+        self.key = key  # key (0 to 2040 bits)
+        self.strip_extra_nulls = strip_extra_nulls
         # some useful constants
         self.T = 2 * (R + 1)
         self.w4 = w // 4
@@ -24,19 +25,19 @@ class RC5:
         n %= self.w
         return ((val & self.mask) >> n) | (val << (self.w - n) & self.mask)
 
-    def __const(self): # constants generation
+    def __const(self):  # constants generation
         if self.w == 16:
-            return (0xB7E1, 0x9E37) # return P, Q values
+            return 0xB7E1, 0x9E37  # return P, Q values
         elif self.w == 32:
-            return (0xB7E15163, 0x9E3779B9)
+            return 0xB7E15163, 0x9E3779B9
         elif self.w == 64:
-            return (0xB7E151628AED2A6B, 0x9E3779B97F4A7C15)
+            return 0xB7E151628AED2A6B, 0x9E3779B97F4A7C15
 
     def __keyAlign(self):
-        if self.b == 0: # key is empty
+        if self.b == 0:  # key is empty
             self.c = 1
         elif self.b % self.w8:
-            self.key += b'\x00' * (self.w8 - self.b % self.w8) # fill key with \x00 bytes
+            self.key += b'\x00' * (self.w8 - self.b % self.w8)  # fill key with \x00 bytes
             self.b = len(self.key)
             self.c = self.b // self.w8
         else:
@@ -95,15 +96,12 @@ class RC5:
 
     def decryptFile(self, inpFileName, outFileName):
         with open(inpFileName, 'rb') as inp, open(outFileName, 'wb') as out:
-            run = True
-            while run:
+            while True:
                 text = inp.read(self.w4)
                 if not text:
                     break
-                if len(text) != self.w4:
-                    run = False
                 text = self.decryptBlock(text)
-                if not run:
+                if self.strip_extra_nulls:
                     text = text.rstrip(b'\x00')
                 out.write(text)
 
